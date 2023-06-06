@@ -16,7 +16,7 @@ def geocode_place(street, city, state):
     geocode_url = "https://maps.googleapis.com/maps/api/geocode/json"
     params = {
         "address": address,
-        "key": "AIzaSyCDxLFiHPVpF3iiE--ZDfRznVIvCAKQIl8"
+        "key": ""
     }
     response = requests.get(geocode_url, params=params)
     if response.status_code == 200:
