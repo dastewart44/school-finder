@@ -19,6 +19,6 @@ def calculate_school_estimates(df, student_characteristics):
         estimated_gpas[school] = predicted_gpa[0]
 
     # Sort the estimated GPAs and get the top 5 schools
-    sorted_results = sorted(estimated_gpas.items(), key=lambda x: x[1], reverse=True)[:5]
+    sorted_results = sorted(estimated_gpas.items(), key=lambda x: x[1], reverse=True)
     
     return sorted_results
