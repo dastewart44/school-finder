@@ -6,7 +6,10 @@ import zipfile
 import pandas as pd
 import tempfile
 import os
+from streamlit_extras.switch_page_button import switch_page
     
+st.set_page_config(page_icon=None, layout="centered", initial_sidebar_state="collapsed", menu_items=None)
+
 def best_schools(user_vals):
     # Create a temporary directory
     temp_dir = tempfile.gettempdir()
@@ -84,12 +87,19 @@ def main():
     characteristics = [[sped, frl, ell, race_vals[0], race_vals[1], race_vals[2], race_vals[3], starting_gpa]]
     vals = pd.DataFrame(characteristics, columns=['sped_flag', 'frl_flag', 'ell_flag', 'asian_flag', 'black_flag', 'hispanic_flag', 'white_flag', 'starting_gpa'])
     top_schools = best_schools(vals)
-    top_schools['SCHOOL_TYPE'] = school_type
+    top_schools['school_type_keep'] = school_type
     
     # Check if you've already initialized the data
     if 'top_schools' not in st.session_state:
         # Save the data to session state
         st.session_state.df = top_schools
+        
+    if 'page' not in st.session_state:
+        st.session_state.page = "home"
 
+    next_page = st.button("Click to See Schools")
+    if next_page:
+        switch_page("page_01")
+        
 if __name__ == "__main__":
     main()
