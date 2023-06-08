@@ -90,9 +90,12 @@ def main():
     top_schools['school_type_keep'] = school_type
     
     # Check if you've already initialized the data
-    if 'top_schools' not in st.session_state:
+    if 'df' not in st.session_state:
         # Save the data to session state
         st.session_state.df = top_schools
+        
+    if 'race' not in st.session_state:
+        st.session_state.race = race_ethnicity
 
     next_page = st.button("Click to See Schools")
     if next_page:

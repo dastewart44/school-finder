@@ -12,7 +12,13 @@ from config import google_api_key
 
 # Use the full page instead of a narrow central column
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
-
+    
+b1, b2 = st.columns((1, 4))
+with b1:
+    previous_page = st.button("Previous Page")
+    if previous_page:
+        switch_page("app")
+        
 if 'df' not in st.session_state:
     st.session_state.df = pd.DataFrame() 
     
@@ -99,12 +105,19 @@ def main():
     address_input = st.text_input('Enter your home address:')
     number_of_schools = st.slider('Select number of schools:', 1, 20, 10)
     
+    if 'school_id' not in st.session_state:
+        st.session_state.school_id = df_school_type['school_id'].iloc[0]
+    
     if address_input:
         street, city, state = parse_address(address_input)
         user_lat, user_lng = geocode_place(street, city, state)
         df_school_type["Distance"], df_school_type["Duration"] = zip(*df_school_type.apply(lambda row: calculate_distance_and_time(f"{user_lat},{user_lng}", f"{row['Latitude']},{row['Longitude']}"), axis=1))
         df_school_type = df_school_type.sort_values('prediction', ascending=False)
         map = create_school_finder_map(number_of_schools, df_school_type)
+        if 'lat' not in st.session_state :
+            st.session_state.lat = user_lat
+        if 'lon' not in st.session_state :
+            st.session_state.lon = user_lng
         
         # Define the columns before the map is created
         c1, c2 = st.columns((2, 1))
@@ -117,13 +130,14 @@ def main():
                 st.components.v1.html(html, width=800, height=600)
         with c2:
             st.title('School Recommendations')
-            if 'school_id' not in st.session_state:
-                for i in range(number_of_schools):
-                    next_page = st.button(f"{df_school_type['SCHOOL_NAME'].iloc[i]} | Predicted GPA: {round(df_school_type['prediction'].iloc[i], 2)} | Distance: {df_school_type['Distance'].iloc[i]} | Duration: {df_school_type['Duration'].iloc[i]}")
-                    if next_page:
-                        st.write(f"School ID just changed to {df_school_type['school_id'].iloc[i]}")
-                        st.session_state.school_id = df_school_type['school_id'].iloc[i]
-                        switch_page("page_02")
+            for i in range(number_of_schools):
+                next_page = st.button(f"{df_school_type['SCHOOL_NAME'].iloc[i]} | Predicted GPA: {round(df_school_type['prediction'].iloc[i], 2)} | Distance: {df_school_type['Distance'].iloc[i]} | Duration: {df_school_type['Duration'].iloc[i]}")
+                if next_page:
+                    st.write(f"School ID just changed to {df_school_type['school_id'].iloc[i]}")
+                    st.session_state.school_id = df_school_type['school_id'].iloc[i]
+                    switch_page("page_02")
+    if 'df2' not in st.session_state :
+        st.session_state.df2 = df_school_type
 
 if __name__ == "__main__":
     main()
