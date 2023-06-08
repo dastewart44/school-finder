@@ -93,9 +93,6 @@ def main():
     if 'top_schools' not in st.session_state:
         # Save the data to session state
         st.session_state.df = top_schools
-        
-    if 'page' not in st.session_state:
-        st.session_state.page = "home"
 
     next_page = st.button("Click to See Schools")
     if next_page:
