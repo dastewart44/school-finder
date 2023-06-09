@@ -46,7 +46,7 @@ df_fake = pd.read_csv(fake_data_all)
 df_fake_selected = df_fake[df_fake['school_id'] == school_id].copy()
 
 def dems():
-    st.title('School Demographics')
+    st.markdown("### School Demographics")
     dems = df_avgs_selected[['pct_asian', 'pct_black', 'pct_hispanic', 'pct_white', 'pct_other']].iloc[0] * 100
     colors = ['lightgrey'] * len(dems)
 
@@ -211,16 +211,36 @@ def school_description(prompt):
         return None  # Return None or handle the error appropriately
 
 def main():
-    col1, col2, col3, col4, col5 = st.columns((3, .25, 3, .25, 3))
+    st.title(f'School Profile')
+    # Add custom CSS style
+    st.markdown(
+        """
+        <style>
+        .custom-bar {
+            background-color: lightgrey;
+            height: 4px;
+            width: 100%;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Insert the custom bar
+    st.markdown('<div class="custom-bar"></div>', unsafe_allow_html=True)
+    
+    col1, col2, col3, col4, col5 = st.columns((3, .1, 3, .1, 3))
     
     with col1:
-        st.title(f'School Profile: {school_name}')
+        st.markdown(f"### {school_name}")
+        school_picture()
         school_info = school_description(f"Provide me with a one-paragraph description of {school_name} in Denver, Colorado")
         st.write(school_info)
-        school_picture()
         
     with col3:
-        st.title('Driving Route')
+        st.markdown("### Driving Route")
         m = create_map(user_lat, user_lon, school_lat, school_lon, school_name)   
         # Get the route coordinates
         route_coordinates, total_distance = create_route(user_lon, user_lat, school_lon, school_lat)
