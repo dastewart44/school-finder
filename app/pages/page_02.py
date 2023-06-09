@@ -13,8 +13,8 @@ import seaborn as sns
 from PIL import Image
 import io
 import json
-import openai
 from bs4 import BeautifulSoup
+from geopy.distance import geodesic
 from streamlit_extras.switch_page_button import switch_page
 from config import open_ai_key
 from config import google_api_key
@@ -46,8 +46,8 @@ df_fake = pd.read_csv(fake_data_all)
 df_fake_selected = df_fake[df_fake['school_id'] == school_id].copy()
 
 def dems():
-    st.write('School Demographics')
-    dems = df_avgs_selected[['pct_asian', 'pct_black', 'pct_hispanic', 'pct_white', 'pct_other']].iloc[0]
+    st.title('School Demographics')
+    dems = df_avgs_selected[['pct_asian', 'pct_black', 'pct_hispanic', 'pct_white', 'pct_other']].iloc[0] * 100
     colors = ['lightgrey'] * len(dems)
 
     if student_race == 'Asian':
@@ -65,31 +65,43 @@ def dems():
     # Create a figure and axes
     fig, ax = plt.subplots()
 
-    # Create your barplot
-    sns.barplot(x=dems.values, y=dems.index, palette=colors, orient='h', ax=ax)
+    # Specify the new race categories
+    race_categories = ['Asian', 'Black or African American', 'Hhispanic or Latino', 'White', 'Other']
+
+    # Create your barplot with race categories
+    sns.barplot(x=dems.values, y=race_categories, palette=colors, orient='h', ax=ax)
 
     # Here's how you can change the labels
-    ax.set_xlabel('% of Students') 
-    ax.set_ylabel('Race') 
+    ax.set_xlabel('% of Students')
+    ax.set_ylabel('Race')
+    
+    # Remove the chart borders
+    sns.despine(ax=ax, left=True, bottom=True)
 
-    # Remove the chart border
-    sns.despine(bottom=True, left=True)
+    # Set thicker lines
+    for spine in ax.spines.values():
+        spine.set_linewidth(2)
 
-    # Eliminate tick marks
-    ax.tick_params(bottom=False, left=False)
+    # Remove the chart border on the right
+    ax.spines['right'].set_visible(False)
 
-    # Eliminate axis values
-    ax.xaxis.set_major_formatter(plt.NullFormatter())
-    ax.yaxis.set_major_formatter(plt.NullFormatter())
+    # Adjust the bar width
+    bar_width = 0.5
+    for i, bar in enumerate(ax.patches):
+        bar.set_height(bar_width)
+        bar.set_y(i - bar_width / 2)
 
     # Add data labels
-    for p in ax.patches:
-        width = p.get_width()
-        ax.text(width + 0.1,  
-                p.get_y() + p.get_height() / 2, 
-                '{:1.2f}%'.format(width), 
-                ha = 'left', 
-                va = 'center')
+    for i, value in enumerate(dems.values):
+        ax.text(value + 0.1,
+                i,
+                ' {:.2f}%'.format(value),  # Use {:.2f}% to format the value as a percentage with two decimal places
+                ha='left',
+                va='center')
+        
+    # Eliminate tick marks and axis values
+    ax.tick_params(left=False, bottom=False)
+    ax.xaxis.set_major_formatter(plt.NullFormatter())
 
     return st.pyplot(fig)
 
@@ -105,8 +117,14 @@ def school_picture():
 def create_map(user_lat, user_lon, school_lat, school_lon, school_name):
     # Create a map centered around user's location
     map_center = [(school_lat + user_lat)/2, (user_lon + school_lon)/2]
-    m = folium.Map(location=map_center, zoom_start=12)
     
+    # Calculate the map width based on the column width
+    map_width = 100  # Adjust this value as needed
+
+    # Create a map figure with the desired width and height
+    fig = folium.Figure(width=map_width, height=map_width)
+    m = folium.Map(location=map_center, zoom_start=11).add_to(fig)
+
     # Add marker for user's location
     folium.Marker(location=[user_lat, user_lon], 
                   popup="Home", 
@@ -127,7 +145,36 @@ def create_route(user_lon, user_lat, school_lon, school_lat):
 
     # Convert coordinates format from [lon, lat] to (lat, lon)
     coordinates = [(coord[1], coord[0]) for coord in coordinates]
-    return coordinates
+    
+    total_distance = 0.0
+    for i in range(len(coordinates) - 1):
+        start_coord = coordinates[i]
+        end_coord = coordinates[i + 1]
+        distance = geodesic(start_coord, end_coord).miles
+        total_distance += distance
+        
+    return coordinates, total_distance
+
+def generate_driving_directions(start_lat, start_lon, end_lat, end_lon):
+    url = "https://api.openai.com/v1/completions"
+    prompt = f"What are the best driving directions from {start_lat}, {start_lon} to {end_lat}, {end_lon}? Please don't include the coordinates in your response."
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {open_ai_key}",
+    }
+    data = {
+        "model": "text-davinci-003",
+        "prompt": prompt,
+        "max_tokens": 150
+    }
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+    response_json = response.json()
+    
+    if "choices" in response_json and len(response_json["choices"]) > 0:
+        directions = response_json["choices"][0]["text"].strip()
+        return directions.split("\n") 
+    else:
+        return None
 
 def school_description(prompt):
     url = "https://api.openai.com/v1/completions"
@@ -147,7 +194,16 @@ def school_description(prompt):
         response_json = response.json()
         
         if "choices" in response_json and len(response_json["choices"]) > 0:
-            return response_json['choices'][0]['text'].strip()
+            completion_text = response_json['choices'][0]['text'].strip()
+            
+            # Trim the output to start with the first word
+            first_word_index = completion_text.find(' ')
+            if first_word_index != -1:
+                trimmed_text = completion_text[first_word_index:].strip()
+            else:
+                trimmed_text = completion_text
+                
+            return trimmed_text
         else:
             return None  # Handle the case when no choices are available
     except (requests.RequestException, ValueError, KeyError) as e:
@@ -155,22 +211,32 @@ def school_description(prompt):
         return None  # Return None or handle the error appropriately
 
 def main():
-    col1, col2, col3 = st.columns((3, 1, 3))
+    col1, col2, col3, col4, col5 = st.columns((3, .25, 3, .25, 3))
+    
     with col1:
-        st.title(school_name)
+        st.title(f'School Profile: {school_name}')
         school_info = school_description(f"Provide me with a one-paragraph description of {school_name} in Denver, Colorado")
         st.write(school_info)
         school_picture()
-        dems()
         
     with col3:
-        st.title('Driving Directions')
+        st.title('Driving Route')
         m = create_map(user_lat, user_lon, school_lat, school_lon, school_name)   
         # Get the route coordinates
-        route_coordinates = create_route(user_lon, user_lat, school_lon, school_lat)
+        route_coordinates, total_distance = create_route(user_lon, user_lat, school_lon, school_lat)
         # Add the route polyline to the map
-        folium.PolyLine(locations=route_coordinates, color='blue').add_to(m)     
-        folium_static(m)
+        folium.PolyLine(locations=route_coordinates, color='blue').add_to(m)
+        
+        # Render the map using folium_static
+        folium_static(m, width=450)
+        
+        directions = generate_driving_directions(user_lat, user_lon, school_lat, school_lon)
+        for line in directions:
+            st.markdown(line)
+        st.write(f"Total driving distance from your house to {school_name} is {total_distance:.1f} miles.")
+        
+    with col5:
+        dems()
         
 if __name__ == "__main__":
     main()
