@@ -2,6 +2,7 @@ import pandas as pd
 import geopandas as gpd
 import googlemaps
 import folium
+from streamlit_folium import folium_static
 import requests
 import os
 import streamlit as st
@@ -93,7 +94,7 @@ def dems():
     return st.pyplot(fig)
 
 def school_picture():
-    x = random.randint(1, 100)
+    x = random.randint(70, 80)
     image_url = f'https://s3-us-west-2.amazonaws.com/schoolmint-chooser-media/denver/{x}.jpg'
     response = requests.get(image_url, stream=True)
     img = Image.open(io.BytesIO(response.content))
@@ -103,8 +104,8 @@ def school_picture():
 
 def create_map(user_lat, user_lon, school_lat, school_lon, school_name):
     # Create a map centered around user's location
-    map_center = [user_lat, user_lon]
-    m = folium.Map(location=map_center, zoom_start=13)
+    map_center = [(school_lat + user_lat)/2, (user_lon + school_lon)/2]
+    m = folium.Map(location=map_center, zoom_start=12)
     
     # Add marker for user's location
     folium.Marker(location=[user_lat, user_lon], 
@@ -116,30 +117,18 @@ def create_map(user_lat, user_lon, school_lat, school_lon, school_name):
                   popup=school_name, 
                   icon=folium.Icon(icon='school', prefix='fa', color='blue')).add_to(m)
     
-    # Get the driving directions
-    directions_result = gmaps.directions((user_lat, user_lon), 
-                                         (school_lat, school_lon), 
-                                         mode="driving")
-
-    # Extract the polyline data from the result
-    polyline_points = directions_result[0]['overview_polyline']['points']
-    
-    # Convert polyline into list of coordinates and add it to the map
-    points = polyline.decode(polyline_points)
-    folium.PolyLine(points, color="blue", weight=2.5, opacity=1).add_to(m)
-    
-    # Extract driving time and distance from the result
-    driving_time = directions_result[0]['legs'][0]['duration']['text']
-    driving_distance = directions_result[0]['legs'][0]['distance']['text']
-    
-    # Create and add a marker with driving info
-    driving_info = f"Estimated Driving Time: {driving_time}, Distance: {driving_distance}"
-    folium.Marker(location=[user_lat, user_lon], 
-                  popup=driving_info, 
-                  icon=folium.Icon(icon='info-sign', color='green')).add_to(m)
-    
     return m
-    
+
+def create_route(user_lon, user_lat, school_lon, school_lat):
+    url = f"http://router.project-osrm.org/route/v1/driving/{user_lon},{user_lat};{school_lon},{school_lat}?overview=full&geometries=geojson"
+    response = requests.get(url)
+    data = response.json()
+    coordinates = data['routes'][0]['geometry']['coordinates']
+
+    # Convert coordinates format from [lon, lat] to (lat, lon)
+    coordinates = [(coord[1], coord[0]) for coord in coordinates]
+    return coordinates
+
 def school_description(prompt):
     url = "https://api.openai.com/v1/completions"
     headers = {
@@ -176,7 +165,12 @@ def main():
         
     with col3:
         st.title('Driving Directions')
-        create_map(user_lat, user_lon, school_lat, school_lon, school_name)        
+        m = create_map(user_lat, user_lon, school_lat, school_lon, school_name)   
+        # Get the route coordinates
+        route_coordinates = create_route(user_lon, user_lat, school_lon, school_lat)
+        # Add the route polyline to the map
+        folium.PolyLine(locations=route_coordinates, color='blue').add_to(m)     
+        folium_static(m)
         
 if __name__ == "__main__":
     main()
