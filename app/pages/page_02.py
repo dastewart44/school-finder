@@ -28,10 +28,10 @@ gmaps = googlemaps.Client(key=google_key)
 
 if 'df2' not in st.session_state:
     st.session_state.df2 = pd.DataFrame()
-    
+
 if 'race' not in st.session_state:
     st.session_state.race = 'Asian'
-    
+
 school_id = st.session_state.school_id
 school_data = st.session_state.df2
 student_race = st.session_state.race
@@ -52,10 +52,11 @@ fake_data_all = 'https://storage.googleapis.com/school-finder-models/fake_data.c
 df_fake = pd.read_csv(fake_data_all)
 df_fake_selected = df_fake[df_fake['school_id'] == school_id].copy()
 
+<<<<<<< HEAD
 def scatter_chart():
     df = pd.read_csv(fake_data_all)
     groups =['sped_flag', 'frl_flag', 'ell_flag', 'asian_flag', 'black_flag', 'hispanic_flag', 'white_flag']
-    group_name = ['Special Education', 'Free and Reduced Lunch', 'English Language Learner', 
+    group_name = ['Special Education', 'Free and Reduced Lunch', 'English Language Learner',
               'Asian', 'Black or African American', 'Hispanic or Latino', 'White']
     df1 = df[df['school_id'] == school_id].copy()
     df2 = pd.DataFrame()
@@ -63,8 +64,8 @@ def scatter_chart():
         df_group = df1[df1[groups[i]] == 1].copy()
         df_group['group'] = group_name[i]
         df_group2 = df_group[['student_id', 'school_id', 'group', 'starting_gpa', 'gpa']].copy()
-        df2 = pd.concat([df2, df_group2]) 
-    
+        df2 = pd.concat([df2, df_group2])
+
     # Create a Streamlit app
     st.markdown(f"### GPAs by Student Group at {school_name}")
 
@@ -95,7 +96,7 @@ def scatter_chart():
 
     # Display the plot
     st.pyplot()
-    
+
 def circle_plot():
     st.markdown("### School Demographics")
     dems = df_avgs_selected[['pct_asian', 'pct_black', 'pct_hispanic', 'pct_white', 'pct_other']].iloc[0] * 100
@@ -134,7 +135,7 @@ def dems():
     # Here's how you can change the labels
     ax.set_xlabel('% of Students')
     ax.set_ylabel('Race')
-    
+
     # Remove the chart borders
     sns.despine(ax=ax, left=True, bottom=True)
 
@@ -158,12 +159,13 @@ def dems():
                 ' {:.2f}%'.format(value),  # Use {:.2f}% to format the value as a percentage with two decimal places
                 ha='left',
                 va='center')
-        
+
     # Eliminate tick marks and axis values
     ax.tick_params(left=False, bottom=False)
     ax.xaxis.set_major_formatter(plt.NullFormatter())
 
     return st.pyplot(fig)
+
 
 def school_picture():
     x = random.randint(70, 80)
@@ -177,7 +179,7 @@ def school_picture():
 def create_map(user_lat, user_lon, school_lat, school_lon, school_name):
     # Create a map centered around user's location
     map_center = [(school_lat + user_lat)/2, (user_lon + school_lon)/2]
-    
+
     # Calculate the map width based on the column width
     map_width = 100  # Adjust this value as needed
 
@@ -186,15 +188,15 @@ def create_map(user_lat, user_lon, school_lat, school_lon, school_name):
     m = folium.Map(location=map_center, zoom_start=11).add_to(fig)
 
     # Add marker for user's location
-    folium.Marker(location=[user_lat, user_lon], 
-                  popup="Home", 
+    folium.Marker(location=[user_lat, user_lon],
+                  popup="Home",
                   icon=folium.Icon(icon='home', color='red')).add_to(m)
-    
+
     # Add marker for the school
-    folium.Marker(location=[school_lat, school_lon], 
-                  popup=school_name, 
+    folium.Marker(location=[school_lat, school_lon],
+                  popup=school_name,
                   icon=folium.Icon(icon='school', prefix='fa', color='blue')).add_to(m)
-    
+
     return m
 
 def create_route(user_lon, user_lat, school_lon, school_lat):
@@ -205,14 +207,14 @@ def create_route(user_lon, user_lat, school_lon, school_lat):
 
     # Convert coordinates format from [lon, lat] to (lat, lon)
     coordinates = [(coord[1], coord[0]) for coord in coordinates]
-    
+
     total_distance = 0.0
     for i in range(len(coordinates) - 1):
         start_coord = coordinates[i]
         end_coord = coordinates[i + 1]
         distance = geodesic(start_coord, end_coord).miles
         total_distance += distance
-        
+
     return coordinates, total_distance
 
 def generate_driving_directions(start_lat, start_lon, end_lat, end_lon):
@@ -229,10 +231,10 @@ def generate_driving_directions(start_lat, start_lon, end_lat, end_lon):
     }
     response = requests.post(url, headers=headers, data=json.dumps(data))
     response_json = response.json()
-    
+
     if "choices" in response_json and len(response_json["choices"]) > 0:
         directions = response_json["choices"][0]["text"].strip()
-        return directions.split("\n") 
+        return directions.split("\n")
     else:
         return None
 
@@ -248,21 +250,21 @@ def school_description(prompt):
         "max_tokens": 150
     }
     response = requests.post(url, headers=headers, data=json.dumps(data))
-    
+
     try:
         response.raise_for_status()  # Check for any HTTP errors
         response_json = response.json()
-        
+
         if "choices" in response_json and len(response_json["choices"]) > 0:
             completion_text = response_json['choices'][0]['text']
-            
+
             # Trim the output to start with the first word
             #first_word_index = completion_text.find(' ')
             #if first_word_index != -1:
             #    trimmed_text = completion_text[first_word_index:].strip()
             #else:
             #    trimmed_text = completion_text
-                
+
             return completion_text
         else:
             return None  # Handle the case when no choices are available
@@ -290,33 +292,33 @@ def main():
 
     # Insert the custom bar
     st.markdown('<div class="custom-bar"></div>', unsafe_allow_html=True)
-    
+
     col1, col2, col3 = st.columns((3.25, .25, 6))
-    
     with col1:
         st.markdown(f"### {school_name}")
         school_picture()
         school_info = school_description(f"Provide me with a one-paragraph description of {school_name} in Denver, Colorado")
         st.write(school_info)
         st.markdown("### Driving Route")
-        m = create_map(user_lat, user_lon, school_lat, school_lon, school_name)   
+        m = create_map(user_lat, user_lon, school_lat, school_lon, school_name)
         # Get the route coordinates
         route_coordinates, total_distance = create_route(user_lon, user_lat, school_lon, school_lat)
         # Add the route polyline to the map
         folium.PolyLine(locations=route_coordinates, color='blue').add_to(m)
-        
+
         # Render the map using folium_static
         folium_static(m, width=450)
-        
+
         directions = generate_driving_directions(user_lat, user_lon, school_lat, school_lon)
         for line in directions:
             st.markdown(line)
         st.write(f"Total driving distance from your house to {school_name} is {total_distance:.1f} miles.")
-        
+
     with col3:
         circle_plot()
         scatter_chart()
-        
+
 if __name__ == "__main__":
     main()
-    
+
+#this is a comment delete me later
