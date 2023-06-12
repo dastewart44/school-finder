@@ -18,12 +18,19 @@ from geopy.distance import geodesic
 from streamlit_extras.switch_page_button import switch_page
 from config import open_ai_key
 from config import google_api_key
+import plotly.graph_objects as go
+
+st.set_option('deprecation.showPyplotGlobalUse', False)
+st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
 google_key = google_api_key
 gmaps = googlemaps.Client(key=google_key)
 
 if 'df2' not in st.session_state:
     st.session_state.df2 = pd.DataFrame()
+    
+if 'race' not in st.session_state:
+    st.session_state.race = 'Asian'
     
 school_id = st.session_state.school_id
 school_data = st.session_state.df2
@@ -45,8 +52,61 @@ fake_data_all = 'https://storage.googleapis.com/school-finder-models/fake_data.c
 df_fake = pd.read_csv(fake_data_all)
 df_fake_selected = df_fake[df_fake['school_id'] == school_id].copy()
 
+def scatter_chart():
+    df = pd.read_csv(fake_data_all)
+    groups =['sped_flag', 'frl_flag', 'ell_flag', 'asian_flag', 'black_flag', 'hispanic_flag', 'white_flag']
+    group_name = ['Special Education', 'Free and Reduced Lunch', 'English Language Learner', 
+              'Asian', 'Black or African American', 'Hispanic or Latino', 'White']
+    df1 = df[df['school_id'] == school_id].copy()
+    df2 = pd.DataFrame()
+    for i in range(len(groups)):
+        df_group = df1[df1[groups[i]] == 1].copy()
+        df_group['group'] = group_name[i]
+        df_group2 = df_group[['student_id', 'school_id', 'group', 'starting_gpa', 'gpa']].copy()
+        df2 = pd.concat([df2, df_group2]) 
+    
+    # Create a Streamlit app
+    st.markdown(f"### GPAs by Student Group at {school_name}")
+
+    # Get the unique group values from the dataset
+    groups = group_name
+
+    # Add a multiselect widget to select groups with a unique key
+    selected_groups = st.multiselect("Select Groups", groups, default=groups, key="group_selector_" + str(len(groups)))
+
+    # Filter the dataframe based on selected groups
+    filtered_df = df2[df2['group'].isin(selected_groups)]
+
+    # Set the style of the plot
+    sns.set_style('white')
+
+    # Create the scatterplot
+    sns.scatterplot(data=filtered_df, x='starting_gpa', y='gpa', hue='group', palette='Set1')
+
+    # Remove the grid lines
+    sns.despine()
+
+    # Move the legend below the chart
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=2, frameon=False)
+
+    # Set plot labels and title
+    plt.xlabel('Starting GPA')
+    plt.ylabel('Ending GPA')
+
+    # Display the plot
+    st.pyplot()
+    
+def circle_plot():
+    st.markdown("### School Demographics")
+    dems = df_avgs_selected[['pct_asian', 'pct_black', 'pct_hispanic', 'pct_white', 'pct_other']].iloc[0] * 100
+    dems_rounded = dems.round(1)
+    labels = ['% Asian', '% Black', '% Hispanic', '% White', '% Other']
+    fig = go.Figure(data=[go.Pie(labels=labels, values=dems_rounded, hole=0.5, marker=dict(colors=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']))])
+    return st.plotly_chart(fig)
+
 def dems():
     st.markdown("### School Demographics")
+    st.write(student_race)
     dems = df_avgs_selected[['pct_asian', 'pct_black', 'pct_hispanic', 'pct_white', 'pct_other']].iloc[0] * 100
     colors = ['lightgrey'] * len(dems)
 
@@ -79,8 +139,8 @@ def dems():
     sns.despine(ax=ax, left=True, bottom=True)
 
     # Set thicker lines
-    for spine in ax.spines.values():
-        spine.set_linewidth(2)
+    #for spine in ax.spines.values():
+    #    spine.set_linewidth(2)
 
     # Remove the chart border on the right
     ax.spines['right'].set_visible(False)
@@ -194,16 +254,16 @@ def school_description(prompt):
         response_json = response.json()
         
         if "choices" in response_json and len(response_json["choices"]) > 0:
-            completion_text = response_json['choices'][0]['text'].strip()
+            completion_text = response_json['choices'][0]['text']
             
             # Trim the output to start with the first word
-            first_word_index = completion_text.find(' ')
-            if first_word_index != -1:
-                trimmed_text = completion_text[first_word_index:].strip()
-            else:
-                trimmed_text = completion_text
+            #first_word_index = completion_text.find(' ')
+            #if first_word_index != -1:
+            #    trimmed_text = completion_text[first_word_index:].strip()
+            #else:
+            #    trimmed_text = completion_text
                 
-            return trimmed_text
+            return completion_text
         else:
             return None  # Handle the case when no choices are available
     except (requests.RequestException, ValueError, KeyError) as e:
@@ -231,15 +291,13 @@ def main():
     # Insert the custom bar
     st.markdown('<div class="custom-bar"></div>', unsafe_allow_html=True)
     
-    col1, col2, col3, col4, col5 = st.columns((3, .1, 3, .1, 3))
+    col1, col2, col3 = st.columns((3.25, .25, 6))
     
     with col1:
         st.markdown(f"### {school_name}")
         school_picture()
         school_info = school_description(f"Provide me with a one-paragraph description of {school_name} in Denver, Colorado")
         st.write(school_info)
-        
-    with col3:
         st.markdown("### Driving Route")
         m = create_map(user_lat, user_lon, school_lat, school_lon, school_name)   
         # Get the route coordinates
@@ -255,8 +313,9 @@ def main():
             st.markdown(line)
         st.write(f"Total driving distance from your house to {school_name} is {total_distance:.1f} miles.")
         
-    with col5:
-        dems()
+    with col3:
+        circle_plot()
+        scatter_chart()
         
 if __name__ == "__main__":
     main()

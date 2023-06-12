@@ -102,13 +102,32 @@ def main():
     df_school_type = df[df['SCHOOL_TYPE'] == df['school_type_keep']].copy().reset_index()
     # Calculate distance and time
     st.title("Let's see which schools are likely to maximize your child's GPA.")
+    # Add custom CSS style
+    st.markdown(
+        """
+        <style>
+        .custom-bar {
+            background-color: lightgrey;
+            height: 4px;
+            width: 100%;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    
+    # Insert the custom bar
+    st.markdown('<div class="custom-bar"></div>', unsafe_allow_html=True)
+    
     address_input = st.text_input('Enter your home address:')
-    number_of_schools = st.slider('Select number of schools:', 1, 20, 10)
     
     if 'school_id' not in st.session_state:
         st.session_state.school_id = df_school_type['school_id'].iloc[0]
     
     if address_input:
+        number_of_schools = st.slider('Select number of schools:', 1, 20, 10)
         street, city, state = parse_address(address_input)
         user_lat, user_lng = geocode_place(street, city, state)
         df_school_type["Distance"], df_school_type["Duration"] = zip(*df_school_type.apply(lambda row: calculate_distance_and_time(f"{user_lat},{user_lng}", f"{row['Latitude']},{row['Longitude']}"), axis=1))
@@ -133,7 +152,7 @@ def main():
             for i in range(number_of_schools):
                 next_page = st.button(f"{df_school_type['SCHOOL_NAME'].iloc[i]} | Predicted GPA: {round(df_school_type['prediction'].iloc[i], 2)} | Distance: {df_school_type['Distance'].iloc[i]} | Duration: {df_school_type['Duration'].iloc[i]}")
                 if next_page:
-                    st.write(f"School ID just changed to {df_school_type['school_id'].iloc[i]}")
+                    #st.write(f"School ID just changed to {df_school_type['school_id'].iloc[i]}")
                     st.session_state.school_id = df_school_type['school_id'].iloc[i]
                     switch_page("page_02")
     if 'df2' not in st.session_state :

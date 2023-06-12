@@ -53,6 +53,25 @@ def best_schools(user_vals):
 
 def main():
     st.title('Welcome to the (Fake) Denver School Finder')
+    
+    # Add custom CSS style
+    st.markdown(
+        """
+        <style>
+        .custom-bar {
+            background-color: lightgrey;
+            height: 4px;
+            width: 100%;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    
+    # Insert the custom bar
+    st.markdown('<div class="custom-bar"></div>', unsafe_allow_html=True)
 
     st.write('The goal of this school finder is to help you find the best school for your child.'
              'Answering the questions below will help us determine which school will help your child grow the most.')
@@ -63,6 +82,10 @@ def main():
     race_ethnicity = st.radio("Please click on your child's race/ethnicity:", ('Asian', 'Black or African American', 'Hispanic or Latino', 'White', 'Other'))
     starting_gpa = st.slider("Enter your child's current GPA [0-1]", 0.0, 1.0, .5)
 
+    # Sync the race_ethnicity selection with st.session_state.race
+    if 'race' not in st.session_state:
+        st.session_state.race = 'Asian'
+    
     race_vals = []
     if race_ethnicity == 'Asian':
         race_vals = [1, 0, 0, 0]
@@ -93,9 +116,8 @@ def main():
     if 'df' not in st.session_state:
         # Save the data to session state
         st.session_state.df = top_schools
-        
-    if 'race' not in st.session_state:
-        st.session_state.race = race_ethnicity
+    
+    st.session_state.race = race_ethnicity
 
     next_page = st.button("Click to See Schools")
     if next_page:

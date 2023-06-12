@@ -34,48 +34,50 @@ def fake_data():
     student_ids = np.arange(1, students+1)
     num_schools = 176
 
+    noise_std = .1
+    
     # Define mappings for flag combinations and GPAs
     gpa_mapping = {
-        (0, 0, 0, 0, 0, 0, 0): {'starting_gpa': .7, 'ending_gpa': .75},
-        (1, 0, 0, 0, 0, 0, 0): {'starting_gpa': .4, 'ending_gpa': .4},
-        (0, 1, 0, 0, 0, 0, 0): {'starting_gpa': .55, 'ending_gpa': .57},
-        (0, 0, 1, 0, 0, 0, 0): {'starting_gpa': .6, 'ending_gpa': .63},
-        (1, 1, 0, 0, 0, 0, 0): {'starting_gpa': .6, 'ending_gpa': .61},
-        (1, 0, 1, 0, 0, 0, 0): {'starting_gpa': .3, 'ending_gpa': .32},
-        (0, 1, 1, 0, 0, 0, 0): {'starting_gpa': .45, 'ending_gpa': .5},
-        (1, 1, 1, 0, 0, 0, 0): {'starting_gpa': .5, 'ending_gpa': .51},
-        (0, 0, 0, 1, 0, 0, 0): {'starting_gpa': .62, 'ending_gpa': .65},
-        (1, 0, 0, 1, 0, 0, 0): {'starting_gpa': .43, 'ending_gpa': .46},
-        (0, 1, 0, 1, 0, 0, 0): {'starting_gpa': .51, 'ending_gpa': .53},
-        (0, 0, 1, 1, 0, 0, 0): {'starting_gpa': .63, 'ending_gpa': .67},
-        (1, 1, 0, 1, 0, 0, 0): {'starting_gpa': .68, 'ending_gpa': .72},
-        (1, 0, 1, 1, 0, 0, 0): {'starting_gpa': .54, 'ending_gpa': .58},
-        (0, 1, 1, 1, 0, 0, 0): {'starting_gpa': .58, 'ending_gpa': .62},
-        (1, 1, 1, 1, 0, 0, 0): {'starting_gpa': .63, 'ending_gpa': .66},
-        (0, 0, 0, 0, 1, 0, 0): {'starting_gpa': .45, 'ending_gpa': .55},
-        (1, 0, 0, 0, 1, 0, 0): {'starting_gpa': .32, 'ending_gpa': .35},
-        (0, 1, 0, 0, 1, 0, 0): {'starting_gpa': .4, 'ending_gpa': .43},
-        (0, 0, 1, 0, 1, 0, 0): {'starting_gpa': .47, 'ending_gpa': .52},
-        (1, 1, 0, 0, 1, 0, 0): {'starting_gpa': .3, 'ending_gpa': .35},
-        (1, 0, 1, 0, 1, 0, 0): {'starting_gpa': .35, 'ending_gpa': .4},
-        (0, 1, 1, 0, 1, 0, 0): {'starting_gpa': .37, 'ending_gpa': .4},
-        (1, 1, 1, 0, 1, 0, 0): {'starting_gpa': .25, 'ending_gpa': .27},
-        (0, 0, 0, 0, 0, 1, 0): {'starting_gpa': .2, 'ending_gpa': .21},
-        (1, 0, 0, 0, 0, 1, 0): {'starting_gpa': .22, 'ending_gpa': .24},
-        (0, 1, 0, 0, 0, 1, 0): {'starting_gpa': .23, 'ending_gpa': .28},
-        (0, 0, 1, 0, 0, 1, 0): {'starting_gpa': .1, 'ending_gpa': .15},
-        (1, 1, 0, 0, 0, 1, 0): {'starting_gpa': .2, 'ending_gpa': .18},
-        (1, 0, 1, 0, 0, 1, 0): {'starting_gpa': .24, 'ending_gpa': .26},
-        (0, 1, 1, 0, 0, 1, 0): {'starting_gpa': .27, 'ending_gpa': .32},
-        (1, 1, 1, 0, 0, 1, 0): {'starting_gpa': .34, 'ending_gpa': .31},
-        (0, 0, 0, 0, 0, 0, 1): {'starting_gpa': .3, 'ending_gpa': .32},
-        (1, 0, 0, 0, 0, 0, 1): {'starting_gpa': .4, 'ending_gpa': .41},
-        (0, 1, 0, 0, 0, 0, 1): {'starting_gpa': .25, 'ending_gpa': .34},
-        (0, 0, 1, 0, 0, 0, 1): {'starting_gpa': .27, 'ending_gpa': .33},
-        (1, 1, 0, 0, 0, 0, 1): {'starting_gpa': .17, 'ending_gpa': .24},
-        (1, 0, 1, 0, 0, 0, 1): {'starting_gpa': .19, 'ending_gpa': .27},
-        (0, 1, 1, 0, 0, 0, 1): {'starting_gpa': .24, 'ending_gpa': .3},
-        (1, 1, 1, 0, 0, 0, 1): {'starting_gpa': .32, 'ending_gpa': .4},
+        (0, 0, 0, 0, 0, 0, 0): {'starting_gpa': .6 + np.random.normal(scale=noise_std), 'ending_gpa': .63 + np.random.normal(scale=noise_std)},
+        (1, 0, 0, 0, 0, 0, 0): {'starting_gpa': .4 + np.random.normal(scale=noise_std), 'ending_gpa': .43 + np.random.normal(scale=noise_std)},
+        (0, 1, 0, 0, 0, 0, 0): {'starting_gpa': .55 + np.random.normal(scale=noise_std), 'ending_gpa': .57 + np.random.normal(scale=noise_std)},
+        (0, 0, 1, 0, 0, 0, 0): {'starting_gpa': .5 + np.random.normal(scale=noise_std), 'ending_gpa': .53 + np.random.normal(scale=noise_std)},
+        (1, 1, 0, 0, 0, 0, 0): {'starting_gpa': .32 + np.random.normal(scale=noise_std), 'ending_gpa': .37 + np.random.normal(scale=noise_std)},
+        (1, 0, 1, 0, 0, 0, 0): {'starting_gpa': .3 + np.random.normal(scale=noise_std), 'ending_gpa': .32 + np.random.normal(scale=noise_std)},
+        (0, 1, 1, 0, 0, 0, 0): {'starting_gpa': .45 + np.random.normal(scale=noise_std), 'ending_gpa': .5 + np.random.normal(scale=noise_std)},
+        (1, 1, 1, 0, 0, 0, 0): {'starting_gpa': .5 + np.random.normal(scale=noise_std), 'ending_gpa': .51 + np.random.normal(scale=noise_std)},
+        (0, 0, 0, 1, 0, 0, 0): {'starting_gpa': .62 + np.random.normal(scale=noise_std), 'ending_gpa': .65 + np.random.normal(scale=noise_std)},
+        (1, 0, 0, 1, 0, 0, 0): {'starting_gpa': .43 + np.random.normal(scale=noise_std), 'ending_gpa': .46 + np.random.normal(scale=noise_std)},
+        (0, 1, 0, 1, 0, 0, 0): {'starting_gpa': .51 + np.random.normal(scale=noise_std), 'ending_gpa': .53 + np.random.normal(scale=noise_std)},
+        (0, 0, 1, 1, 0, 0, 0): {'starting_gpa': .63 + np.random.normal(scale=noise_std), 'ending_gpa': .67 + np.random.normal(scale=noise_std)},
+        (1, 1, 0, 1, 0, 0, 0): {'starting_gpa': .42 + np.random.normal(scale=noise_std), 'ending_gpa': .45 + np.random.normal(scale=noise_std)},
+        (1, 0, 1, 1, 0, 0, 0): {'starting_gpa': .54 + np.random.normal(scale=noise_std), 'ending_gpa': .56 + np.random.normal(scale=noise_std)},
+        (0, 1, 1, 1, 0, 0, 0): {'starting_gpa': .58 + np.random.normal(scale=noise_std), 'ending_gpa': .62 + np.random.normal(scale=noise_std)},
+        (1, 1, 1, 1, 0, 0, 0): {'starting_gpa': .63 + np.random.normal(scale=noise_std), 'ending_gpa': .66 + np.random.normal(scale=noise_std)},
+        (0, 0, 0, 0, 1, 0, 0): {'starting_gpa': .45 + np.random.normal(scale=noise_std), 'ending_gpa': .55 + np.random.normal(scale=noise_std)},
+        (1, 0, 0, 0, 1, 0, 0): {'starting_gpa': .32 + np.random.normal(scale=noise_std), 'ending_gpa': .35 + np.random.normal(scale=noise_std)},
+        (0, 1, 0, 0, 1, 0, 0): {'starting_gpa': .4 + np.random.normal(scale=noise_std), 'ending_gpa': .43 + np.random.normal(scale=noise_std)},
+        (0, 0, 1, 0, 1, 0, 0): {'starting_gpa': .47 + np.random.normal(scale=noise_std), 'ending_gpa': .52 + np.random.normal(scale=noise_std)},
+        (1, 1, 0, 0, 1, 0, 0): {'starting_gpa': .34 + np.random.normal(scale=noise_std), 'ending_gpa': .39 + np.random.normal(scale=noise_std)},
+        (1, 0, 1, 0, 1, 0, 0): {'starting_gpa': .35 + np.random.normal(scale=noise_std), 'ending_gpa': .4 + np.random.normal(scale=noise_std)},
+        (0, 1, 1, 0, 1, 0, 0): {'starting_gpa': .37 + np.random.normal(scale=noise_std), 'ending_gpa': .4 + np.random.normal(scale=noise_std)},
+        (1, 1, 1, 0, 1, 0, 0): {'starting_gpa': .41 + np.random.normal(scale=noise_std), 'ending_gpa': .43 + np.random.normal(scale=noise_std)},
+        (0, 0, 0, 0, 0, 1, 0): {'starting_gpa': .32 + np.random.normal(scale=noise_std), 'ending_gpa': .38 + np.random.normal(scale=noise_std)},
+        (1, 0, 0, 0, 0, 1, 0): {'starting_gpa': .31 + np.random.normal(scale=noise_std), 'ending_gpa': .41 + np.random.normal(scale=noise_std)},
+        (0, 1, 0, 0, 0, 1, 0): {'starting_gpa': .32 + np.random.normal(scale=noise_std), 'ending_gpa': .32 + np.random.normal(scale=noise_std)},
+        (0, 0, 1, 0, 0, 1, 0): {'starting_gpa': .47 + np.random.normal(scale=noise_std), 'ending_gpa': .49 + np.random.normal(scale=noise_std)},
+        (1, 1, 0, 0, 0, 1, 0): {'starting_gpa': .37 + np.random.normal(scale=noise_std), 'ending_gpa': .41 + np.random.normal(scale=noise_std)},
+        (1, 0, 1, 0, 0, 1, 0): {'starting_gpa': .51 + np.random.normal(scale=noise_std), 'ending_gpa': .52 + np.random.normal(scale=noise_std)},
+        (0, 1, 1, 0, 0, 1, 0): {'starting_gpa': .31 + np.random.normal(scale=noise_std), 'ending_gpa': .32 + np.random.normal(scale=noise_std)},
+        (1, 1, 1, 0, 0, 1, 0): {'starting_gpa': .34 + np.random.normal(scale=noise_std), 'ending_gpa': .31 + np.random.normal(scale=noise_std)},
+        (0, 0, 0, 0, 0, 0, 1): {'starting_gpa': .41 + np.random.normal(scale=noise_std), 'ending_gpa': .35 + np.random.normal(scale=noise_std)},
+        (1, 0, 0, 0, 0, 0, 1): {'starting_gpa': .48 + np.random.normal(scale=noise_std), 'ending_gpa': .41 + np.random.normal(scale=noise_std)},
+        (0, 1, 0, 0, 0, 0, 1): {'starting_gpa': .61 + np.random.normal(scale=noise_std), 'ending_gpa': .58 + np.random.normal(scale=noise_std)},
+        (0, 0, 1, 0, 0, 0, 1): {'starting_gpa': .32 + np.random.normal(scale=noise_std), 'ending_gpa': .33 + np.random.normal(scale=noise_std)},
+        (1, 1, 0, 0, 0, 0, 1): {'starting_gpa': .35 + np.random.normal(scale=noise_std), 'ending_gpa': .38 + np.random.normal(scale=noise_std)},
+        (1, 0, 1, 0, 0, 0, 1): {'starting_gpa': .37 + np.random.normal(scale=noise_std), 'ending_gpa': .40 + np.random.normal(scale=noise_std)},
+        (0, 1, 1, 0, 0, 0, 1): {'starting_gpa': .41 + np.random.normal(scale=noise_std), 'ending_gpa': .38 + np.random.normal(scale=noise_std)},
+        (1, 1, 1, 0, 0, 0, 1): {'starting_gpa': .41 + np.random.normal(scale=noise_std), 'ending_gpa': .43 + np.random.normal(scale=noise_std)},
     }
 
     # Create the DataFrame
@@ -95,7 +97,7 @@ def fake_data():
     unique_combinations = set(zip(df['school_id'], df['sped_flag'], df['frl_flag'], df['ell_flag'], df['asian_flag'], df['black_flag'], df['hispanic_flag'], df['white_flag']))
 
     # Now, only generate adjustments for these combinations
-    school_adjustments = {combination: np.random.uniform(low=-0.1, high=0.1) 
+    school_adjustments = {combination: np.random.uniform(low=-0.3, high=0.3) 
                       for combination in unique_combinations}
     
     # Only look up GPAs for existing combinations
