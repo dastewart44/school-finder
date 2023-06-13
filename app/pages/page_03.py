@@ -23,8 +23,10 @@ import matplotlib.patches as mpatches
 st.set_option('deprecation.showPyplotGlobalUse', False)
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
-google_key = google_api_key
+google_key = st.secrets["google_api_key"]
 gmaps = googlemaps.Client(key=google_key)
+
+open_ai_key = st.secrets["open_ai_key"]
 
 if 'df2' not in st.session_state:
     st.session_state.df2 = pd.DataFrame()

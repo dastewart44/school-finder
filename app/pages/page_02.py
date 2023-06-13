@@ -22,7 +22,7 @@ if 'df' not in st.session_state:
     st.session_state.df = pd.DataFrame()
 
 # Setup Google Maps Client
-api_key = google_api_key
+api_key = st.secrets["google_api_key"]
 gmaps = googlemaps.Client(key=api_key)
 
 def parse_address(address):
