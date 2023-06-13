@@ -33,13 +33,22 @@ def parse_address(address):
     return street, city, state
 
 def geocode_place(street, city, state):
-    geolocator = Nominatim(user_agent="myGeocoder")
-    location = geolocator.geocode(f"{street}, {city}, {state}")
-    if location is not None:
-        return location.latitude, location.longitude
-    else:
-        print(f"Geocoding Error: Unable to locate {street}, {city}, {state}")
-        return None, None
+    base_url = "https://maps.googleapis.com/maps/api/geocode/json"
+    
+    # Construct the address parameter
+    address = f"{street}, {city}, {state}"
+    
+    # Send the request to the Geocoding API
+    params = {"address": address, "key": api_key}
+    response = requests.get(base_url, params=params)
+    data = response.json()
+    
+    # Extract the latitude and longitude if available
+    if data["status"] == "OK":
+        location = data["results"][0]["geometry"]["location"]
+        latitude = location["lat"]
+        longitude = location["lng"]
+        return latitude, longitude
 
 def calculate_distance_and_time(origin, destination):
     result = gmaps.directions(origin, destination)
