@@ -7,6 +7,7 @@ import pandas as pd
 import tempfile
 import os
 from streamlit_extras.switch_page_button import switch_page
+import sklearn
 
 st.set_page_config(page_icon=None, layout="centered", initial_sidebar_state="collapsed", menu_items=None)
 
