@@ -16,8 +16,6 @@ import json
 from bs4 import BeautifulSoup
 from geopy.distance import geodesic
 from streamlit_extras.switch_page_button import switch_page
-from config import open_ai_key
-from config import google_api_key
 import plotly.graph_objects as go
 import numpy as np
 import matplotlib.patches as mpatches

@@ -8,7 +8,6 @@ import os
 import streamlit as st
 from geopy.geocoders import Nominatim
 from streamlit_extras.switch_page_button import switch_page
-from config import google_api_key
 
 # Use the full page instead of a narrow central column
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
