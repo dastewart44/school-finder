@@ -2,278 +2,106 @@ import pandas as pd
 import geopandas as gpd
 import googlemaps
 import folium
-from streamlit_folium import folium_static
 import requests
+import tempfile
 import os
 import streamlit as st
-import random
-import polyline
-import matplotlib.pyplot as plt
-import seaborn as sns
-from PIL import Image
-import io
-import json
-from bs4 import BeautifulSoup
-from geopy.distance import geodesic
+from geopy.geocoders import Nominatim
 from streamlit_extras.switch_page_button import switch_page
-from config import open_ai_key
 from config import google_api_key
-import plotly.graph_objects as go
 
-st.set_option('deprecation.showPyplotGlobalUse', False)
+# Use the full page instead of a narrow central column
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
-google_key = google_api_key
-gmaps = googlemaps.Client(key=google_key)
+b1, b2 = st.columns((1, 4))
+with b1:
+    previous_page = st.button("Previous Page")
+    if previous_page:
+        switch_page("app")
 
-if 'df2' not in st.session_state:
-    st.session_state.df2 = pd.DataFrame()
+if 'df' not in st.session_state:
+    st.session_state.df = pd.DataFrame()
 
-if 'race' not in st.session_state:
-    st.session_state.race = 'Asian'
+# Setup Google Maps Client
+api_key = google_api_key
+gmaps = googlemaps.Client(key=api_key)
 
-school_id = st.session_state.school_id
-school_data = st.session_state.df2
-student_race = st.session_state.race
-user_lat = st.session_state.lat
-user_lon = st.session_state.lon
-selected_school = school_data[school_data['school_id'] == school_id].copy()
-school_name = selected_school['SCHOOL_NAME'].iloc[0]
-school_lat = selected_school['Latitude'].iloc[0]
-school_lon = selected_school['Longitude'].iloc[0]
-phone = str(selected_school['PHONE'].iloc[0])
-mailing_address = selected_school['MAILING_ADDRESS'].iloc[0]
-school_type = selected_school['SCHOOL_TYPE'].iloc[0]
-neighborhood = selected_school['nbhd_name'].iloc[0]
-fake_data_avgs = 'https://storage.googleapis.com/school_finder_bucket/fake_data_avgs.csv'
-df_avgs = pd.read_csv(fake_data_avgs)
-df_avgs_selected = df_avgs[df_avgs['school_id'] == school_id].copy()
-fake_data_all = 'https://storage.googleapis.com/school-finder-models/fake_data.csv'
-df_fake = pd.read_csv(fake_data_all)
-df_fake_selected = df_fake[df_fake['school_id'] == school_id].copy()
+def parse_address(address):
+    address_parts = address.split(",")
+    street = address_parts[0].strip()
+    city = "Denver"
+    state = "Colorado"
+    return street, city, state
 
-<<<<<<< HEAD
-def scatter_chart():
-    df = pd.read_csv(fake_data_all)
-    groups =['sped_flag', 'frl_flag', 'ell_flag', 'asian_flag', 'black_flag', 'hispanic_flag', 'white_flag']
-    group_name = ['Special Education', 'Free and Reduced Lunch', 'English Language Learner',
-              'Asian', 'Black or African American', 'Hispanic or Latino', 'White']
-    df1 = df[df['school_id'] == school_id].copy()
-    df2 = pd.DataFrame()
-    for i in range(len(groups)):
-        df_group = df1[df1[groups[i]] == 1].copy()
-        df_group['group'] = group_name[i]
-        df_group2 = df_group[['student_id', 'school_id', 'group', 'starting_gpa', 'gpa']].copy()
-        df2 = pd.concat([df2, df_group2])
-
-    # Create a Streamlit app
-    st.markdown(f"### GPAs by Student Group at {school_name}")
-
-    # Get the unique group values from the dataset
-    groups = group_name
-
-    # Add a multiselect widget to select groups with a unique key
-    selected_groups = st.multiselect("Select Groups", groups, default=groups, key="group_selector_" + str(len(groups)))
-
-    # Filter the dataframe based on selected groups
-    filtered_df = df2[df2['group'].isin(selected_groups)]
-
-    # Set the style of the plot
-    sns.set_style('white')
-
-    # Create the scatterplot
-    sns.scatterplot(data=filtered_df, x='starting_gpa', y='gpa', hue='group', palette='Set1')
-
-    # Remove the grid lines
-    sns.despine()
-
-    # Move the legend below the chart
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=2, frameon=False)
-
-    # Set plot labels and title
-    plt.xlabel('Starting GPA')
-    plt.ylabel('Ending GPA')
-
-    # Display the plot
-    st.pyplot()
-
-def circle_plot():
-    st.markdown("### School Demographics")
-    dems = df_avgs_selected[['pct_asian', 'pct_black', 'pct_hispanic', 'pct_white', 'pct_other']].iloc[0] * 100
-    dems_rounded = dems.round(1)
-    labels = ['% Asian', '% Black', '% Hispanic', '% White', '% Other']
-    fig = go.Figure(data=[go.Pie(labels=labels, values=dems_rounded, hole=0.5, marker=dict(colors=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']))])
-    return st.plotly_chart(fig)
-
-def dems():
-    st.markdown("### School Demographics")
-    st.write(student_race)
-    dems = df_avgs_selected[['pct_asian', 'pct_black', 'pct_hispanic', 'pct_white', 'pct_other']].iloc[0] * 100
-    colors = ['lightgrey'] * len(dems)
-
-    if student_race == 'Asian':
-        highlighted_bar_index = 0
-    elif student_race == 'Black or African American':
-        highlighted_bar_index = 1
-    elif student_race == 'Hispanic or Latino':
-        highlighted_bar_index = 2
-    elif student_race == 'White':
-        highlighted_bar_index = 3
+def geocode_place(street, city, state):
+    geolocator = Nominatim(user_agent="myGeocoder")
+    location = geolocator.geocode(f"{street}, {city}, {state}")
+    if location is not None:
+        return location.latitude, location.longitude
     else:
-        highlighted_bar_index = 4
+        print(f"Geocoding Error: Unable to locate {street}, {city}, {state}")
+        return None, None
 
-    colors[highlighted_bar_index] = 'blue'
-    # Create a figure and axes
-    fig, ax = plt.subplots()
+def calculate_distance_and_time(origin, destination):
+    result = gmaps.directions(origin, destination)
+    if result:
+        distance = result[0]['legs'][0]['distance']['text']
+        duration = result[0]['legs'][0]['duration']['text']
+        return distance, duration
+    return None, None
 
-    # Specify the new race categories
-    race_categories = ['Asian', 'Black or African American', 'Hhispanic or Latino', 'White', 'Other']
+def create_school_finder_map(number_of_schools, df):
+    df_filtered = df.iloc[:number_of_schools]
+    base_url = "https://storage.googleapis.com/schools-de-shape-file/"
+    shapefile_files = [
+        "geo_export_ac6e6a66-9556-4943-b31c-b66e9d27fbad.shp",
+        "geo_export_ac6e6a66-9556-4943-b31c-b66e9d27fbad.shx",
+        "geo_export_ac6e6a66-9556-4943-b31c-b66e9d27fbad.dbf",
+    ]
 
-    # Create your barplot with race categories
-    sns.barplot(x=dems.values, y=race_categories, palette=colors, orient='h', ax=ax)
+    temp_dir = tempfile.mkdtemp()
 
-    # Here's how you can change the labels
-    ax.set_xlabel('% of Students')
-    ax.set_ylabel('Race')
+    # Download shapefile and associated files
+    file_paths = []
+    for file in shapefile_files:
+        file_url = base_url + file
+        file_response = requests.get(file_url)
+        file_path = os.path.join(temp_dir, file)
+        with open(file_path, 'wb') as f:
+            f.write(file_response.content)
+        file_paths.append(file_path)
 
-    # Remove the chart borders
-    sns.despine(ax=ax, left=True, bottom=True)
+    # Read the shapefile with neighborhood boundaries
+    shapefile_options = {'options': '-oo SHAPE_RESTORE_SHX=YES'}
+    neighborhoods_df = gpd.read_file(file_paths[0], **shapefile_options)
 
-    # Set thicker lines
-    #for spine in ax.spines.values():
-    #    spine.set_linewidth(2)
+    # Set the CRS of the GeoDataFrame
+    neighborhoods_df = neighborhoods_df.set_crs("EPSG:4326")
 
-    # Remove the chart border on the right
-    ax.spines['right'].set_visible(False)
+    # Create a map centered on Denver
+    map_center = [39.7392, -104.9903]
+    m = folium.Map(location=map_center, zoom_start=11)
 
-    # Adjust the bar width
-    bar_width = 0.5
-    for i, bar in enumerate(ax.patches):
-        bar.set_height(bar_width)
-        bar.set_y(i - bar_width / 2)
+    # Add neighborhood boundaries to the map
+    folium.GeoJson(neighborhoods_df).add_to(m)
 
-    # Add data labels
-    for i, value in enumerate(dems.values):
-        ax.text(value + 0.1,
-                i,
-                ' {:.2f}%'.format(value),  # Use {:.2f}% to format the value as a percentage with two decimal places
-                ha='left',
-                va='center')
-
-    # Eliminate tick marks and axis values
-    ax.tick_params(left=False, bottom=False)
-    ax.xaxis.set_major_formatter(plt.NullFormatter())
-
-    return st.pyplot(fig)
-
-
-def school_picture():
-    x = random.randint(70, 80)
-    image_url = f'https://s3-us-west-2.amazonaws.com/schoolmint-chooser-media/denver/{x}.jpg'
-    response = requests.get(image_url, stream=True)
-    img = Image.open(io.BytesIO(response.content))
-    desired_size = (400, 400)
-    img.thumbnail(desired_size)
-    return st.image(img, caption=f"Phone: {phone[0:3]}-{phone[3:6]}-{phone[6:10]}", use_column_width=True)
-
-def create_map(user_lat, user_lon, school_lat, school_lon, school_name):
-    # Create a map centered around user's location
-    map_center = [(school_lat + user_lat)/2, (user_lon + school_lon)/2]
-
-    # Calculate the map width based on the column width
-    map_width = 100  # Adjust this value as needed
-
-    # Create a map figure with the desired width and height
-    fig = folium.Figure(width=map_width, height=map_width)
-    m = folium.Map(location=map_center, zoom_start=11).add_to(fig)
-
-    # Add marker for user's location
-    folium.Marker(location=[user_lat, user_lon],
-                  popup="Home",
-                  icon=folium.Icon(icon='home', color='red')).add_to(m)
-
-    # Add marker for the school
-    folium.Marker(location=[school_lat, school_lon],
-                  popup=school_name,
-                  icon=folium.Icon(icon='school', prefix='fa', color='blue')).add_to(m)
+    for index, row in df_filtered.iterrows():
+        folium.Marker(
+            location=[row['Latitude'], row['Longitude']],
+            popup=f"{row['SCHOOL_NAME']}<br>Distance: {row['Distance']}<br>Duration: {row['Duration']}",
+            icon=folium.Icon(icon='school', prefix='fa')
+        ).add_to(m)
 
     return m
 
-def create_route(user_lon, user_lat, school_lon, school_lat):
-    url = f"http://router.project-osrm.org/route/v1/driving/{user_lon},{user_lat};{school_lon},{school_lat}?overview=full&geometries=geojson"
-    response = requests.get(url)
-    data = response.json()
-    coordinates = data['routes'][0]['geometry']['coordinates']
-
-    # Convert coordinates format from [lon, lat] to (lat, lon)
-    coordinates = [(coord[1], coord[0]) for coord in coordinates]
-
-    total_distance = 0.0
-    for i in range(len(coordinates) - 1):
-        start_coord = coordinates[i]
-        end_coord = coordinates[i + 1]
-        distance = geodesic(start_coord, end_coord).miles
-        total_distance += distance
-
-    return coordinates, total_distance
-
-def generate_driving_directions(start_lat, start_lon, end_lat, end_lon):
-    url = "https://api.openai.com/v1/completions"
-    prompt = f"What are the best driving directions from {start_lat}, {start_lon} to {end_lat}, {end_lon}? Please don't include the coordinates in your response."
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {open_ai_key}",
-    }
-    data = {
-        "model": "text-davinci-003",
-        "prompt": prompt,
-        "max_tokens": 150
-    }
-    response = requests.post(url, headers=headers, data=json.dumps(data))
-    response_json = response.json()
-
-    if "choices" in response_json and len(response_json["choices"]) > 0:
-        directions = response_json["choices"][0]["text"].strip()
-        return directions.split("\n")
-    else:
-        return None
-
-def school_description(prompt):
-    url = "https://api.openai.com/v1/completions"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {open_ai_key}",
-    }
-    data = {
-        "model": "text-davinci-003",
-        "prompt": prompt,
-        "max_tokens": 150
-    }
-    response = requests.post(url, headers=headers, data=json.dumps(data))
-
-    try:
-        response.raise_for_status()  # Check for any HTTP errors
-        response_json = response.json()
-
-        if "choices" in response_json and len(response_json["choices"]) > 0:
-            completion_text = response_json['choices'][0]['text']
-
-            # Trim the output to start with the first word
-            #first_word_index = completion_text.find(' ')
-            #if first_word_index != -1:
-            #    trimmed_text = completion_text[first_word_index:].strip()
-            #else:
-            #    trimmed_text = completion_text
-
-            return completion_text
-        else:
-            return None  # Handle the case when no choices are available
-    except (requests.RequestException, ValueError, KeyError) as e:
-        print(f"An error occurred: {e}")
-        return None  # Return None or handle the error appropriately
-
 def main():
-    st.title(f'School Profile')
+    csv_url = "https://storage.googleapis.com/school-finder-den/geocoded_schools.csv"
+    schools_df = pd.read_csv(csv_url)
+    predictions = st.session_state.df
+    df = pd.merge(schools_df, predictions, on='school_id', how='inner')
+    df_school_type = df[df['SCHOOL_TYPE'] == df['school_type_keep']].copy().reset_index()
+    # Calculate distance and time
+    st.title("Let's see which schools are likely to maximize your child's GPA.")
     # Add custom CSS style
     st.markdown(
         """
@@ -293,32 +121,44 @@ def main():
     # Insert the custom bar
     st.markdown('<div class="custom-bar"></div>', unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns((3.25, .25, 6))
-    with col1:
-        st.markdown(f"### {school_name}")
-        school_picture()
-        school_info = school_description(f"Provide me with a one-paragraph description of {school_name} in Denver, Colorado")
-        st.write(school_info)
-        st.markdown("### Driving Route")
-        m = create_map(user_lat, user_lon, school_lat, school_lon, school_name)
-        # Get the route coordinates
-        route_coordinates, total_distance = create_route(user_lon, user_lat, school_lon, school_lat)
-        # Add the route polyline to the map
-        folium.PolyLine(locations=route_coordinates, color='blue').add_to(m)
+    address_input = st.text_input('Enter your home address:')
 
-        # Render the map using folium_static
-        folium_static(m, width=450)
+    if 'school_id' not in st.session_state:
+        st.session_state.school_id = df_school_type['school_id'].iloc[0]
 
-        directions = generate_driving_directions(user_lat, user_lon, school_lat, school_lon)
-        for line in directions:
-            st.markdown(line)
-        st.write(f"Total driving distance from your house to {school_name} is {total_distance:.1f} miles.")
+    if address_input:
+        number_of_schools = st.slider('Select number of schools:', 1, 20, 3)
+        street, city, state = parse_address(address_input)
+        user_lat, user_lng = geocode_place(street, city, state)
+        selected_schools = df_school_type.iloc[:number_of_schools].copy()
+        selected_schools["Distance"], selected_schools["Duration"] = zip(*selected_schools.apply(lambda row: calculate_distance_and_time(f"{user_lat},{user_lng}", f"{row['Latitude']},{row['Longitude']}"), axis=1))
+        selected_schools = selected_schools.sort_values('prediction', ascending=False)
+        map = create_school_finder_map(number_of_schools, selected_schools)
+        if 'lat' not in st.session_state :
+            st.session_state.lat = user_lat
+        if 'lon' not in st.session_state :
+            st.session_state.lon = user_lng
+        if 'df2' not in st.session_state :
+            st.session_state.df2 = selected_schools
 
-    with col3:
-        circle_plot()
-        scatter_chart()
+        # Define the columns before the map is created
+        c1, c2 = st.columns((2, 1))
+        with c1:
+            folium.Marker([user_lat, user_lng], popup=address_input, icon=folium.Icon(color='red')).add_to(map)
+            map.save("map.html")
+            with open("map.html", "r") as f:
+                html = f.read()
+                # Use column 1 (c1) for the map
+                st.components.v1.html(html, width=800, height=600)
+        with c2:
+            st.title('School Recommendations')
+            for i in range(number_of_schools):
+                next_page = st.button(f"{selected_schools['SCHOOL_NAME'].iloc[i]} | Predicted GPA: {round(selected_schools['prediction'].iloc[i], 2)} | Distance: {selected_schools['Distance'].iloc[i]} | Duration: {selected_schools['Duration'].iloc[i]}")
+                if next_page:
+                    #st.write(f"School ID just changed to {df_school_type['school_id'].iloc[i]}")
+                    st.session_state.school_id = selected_schools['school_id'].iloc[i]
+                    switch_page("page_03")
+
 
 if __name__ == "__main__":
     main()
-
-#this is a comment delete me later
