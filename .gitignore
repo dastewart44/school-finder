@@ -1,2 +1,4 @@
-raw_data/
+raw_data/models
+raw_data/unzipped
 config.py
+raw_data/__pycache__
