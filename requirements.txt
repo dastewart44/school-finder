@@ -25,4 +25,4 @@ random
 polyline
 json
 image
-scikit-learn
+scikit
