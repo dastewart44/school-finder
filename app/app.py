@@ -1,32 +1,44 @@
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 
-st.set_page_config(page_icon=None, layout="centered", initial_sidebar_state="collapsed", menu_items=None)
+st.set_page_config(
+    page_icon=None,
+    layout="centered",
+    initial_sidebar_state="collapsed",
+    menu_items=None
+)
 
 def main():
-    st.title('Nohting to see here until Fahd finishes his page.')
-
-    # Add custom CSS style
     st.markdown(
         """
         <style>
-        .custom-bar {
-            background-color: lightgrey;
-            height: 4px;
-            width: 100%;
-            margin-top: 10px;
-            margin-bottom: 10px;
+        .stButton {
+            margin-top: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 200px;
+            height: 50px;
+            font-size: 18px;
+        }
+        .stApp {
+            background-image: url("https://i.imgur.com/YFcGVI9.jpeg");
+            background-attachment: fixed;
+            background-size: cover;
         }
         </style>
         """,
         unsafe_allow_html=True
     )
 
-    # Insert the custom bar
-    st.markdown('<div class="custom-bar"></div>', unsafe_allow_html=True)
+    # Display an image
+    image_url = "https://i.imgur.com/aEuKt99.png"  # Replace with your image URL
+    st.image(image_url, use_column_width=True)
 
-    next_page = st.button("Enter")
-    if next_page:
+    # Add a button to navigate to the next page
+    if st.button("Find Schools"):
+        # Redirect to the next page when the button is clicked
+        st.write("Redirecting to the next page...")
         switch_page("page_01")
 
 if __name__ == "__main__":
