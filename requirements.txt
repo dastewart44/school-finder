@@ -15,14 +15,4 @@ beautifulsoup4>=4.10.0
 notebook
 plotly
 numpy
-pickle
-io
-zipfile
-tempfile
-os
-requests
-random
-polyline
-json
-image
 scikit-learn
