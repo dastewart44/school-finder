@@ -6,6 +6,7 @@ import zipfile
 import pandas as pd
 import tempfile
 import os
+from PIL import Image
 from streamlit_extras.switch_page_button import switch_page
 
 st.set_page_config(page_icon=None, layout="centered", initial_sidebar_state="collapsed", menu_items=None)
@@ -53,11 +54,23 @@ def best_schools(user_vals):
 
 def main():
     st.title('Welcome to the (Fake) Denver School Finder')
-
-    # Add custom CSS style
     st.markdown(
         """
         <style>
+        .stButton {
+            margin-top: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 200px;
+            height: 50px;
+            font-size: 18px;
+        }
+        .stApp {
+            background-image: url("https://imgur.com/prYJXix.jpg");
+            background-attachment: fixed;
+            background-size: cover;
+        }
         .custom-bar {
             background-color: lightgrey;
             height: 4px;
@@ -69,8 +82,8 @@ def main():
         """,
         unsafe_allow_html=True
     )
-
-    # Insert the custom bar
+    
+    # Add custom CSS style
     st.markdown('<div class="custom-bar"></div>', unsafe_allow_html=True)
 
     st.write('The goal of this school finder is to help you find the best school for your child.'
@@ -81,7 +94,7 @@ def main():
     selected_options = st.multiselect('Please select the services your child receives:', options)
     race_ethnicity = st.radio("Please click on your child's race/ethnicity:", ('Asian', 'Black or African American', 'Hispanic or Latino', 'White', 'Other'))
     starting_gpa = st.slider("Enter your child's current GPA [0-1]", 0.0, 1.0, .5)
-
+        
     # Sync the race_ethnicity selection with st.session_state.race
     if 'race' not in st.session_state:
         st.session_state.race = 'Asian'
@@ -109,7 +122,10 @@ def main():
 
     characteristics = [[sped, frl, ell, race_vals[0], race_vals[1], race_vals[2], race_vals[3], starting_gpa]]
     vals = pd.DataFrame(characteristics, columns=['sped_flag', 'frl_flag', 'ell_flag', 'asian_flag', 'black_flag', 'hispanic_flag', 'white_flag', 'starting_gpa'])
-    top_schools = best_schools(vals)
+    
+    with st.spinner('Calculating best schools for your child...'):
+        top_schools = best_schools(vals)
+
     top_schools['school_type_keep'] = school_type
 
     # Check if you've already initialized the data
@@ -118,7 +134,6 @@ def main():
         st.session_state.df = top_schools
 
     st.session_state.race = race_ethnicity
-
     next_page = st.button("Click to See Schools")
     if next_page:
         switch_page("page_02")

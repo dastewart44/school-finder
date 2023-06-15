@@ -136,37 +136,37 @@ def main():
 
     if address_input:
         number_of_schools = st.slider('Select number of schools:', 1, 20, 3)
-        street, city, state = parse_address(address_input)
-        user_lat, user_lng = geocode_place(street, city, state)
-        selected_schools = df_school_type.iloc[:number_of_schools].copy()
-        selected_schools["Distance"], selected_schools["Duration"] = zip(*selected_schools.apply(lambda row: calculate_distance_and_time(f"{user_lat},{user_lng}", f"{row['Latitude']},{row['Longitude']}"), axis=1))
-        selected_schools = selected_schools.sort_values('prediction', ascending=False)
-        map = create_school_finder_map(number_of_schools, selected_schools)
-        if 'lat' not in st.session_state :
-            st.session_state.lat = user_lat
-        if 'lon' not in st.session_state :
-            st.session_state.lon = user_lng
-        if 'df2' not in st.session_state :
-            st.session_state.df2 = selected_schools
+        with st.spinner("Plotting schools on map..."):
+            street, city, state = parse_address(address_input)
+            user_lat, user_lng = geocode_place(street, city, state)
+            selected_schools = df_school_type.iloc[:number_of_schools].copy()
+            selected_schools["Distance"], selected_schools["Duration"] = zip(*selected_schools.apply(lambda row: calculate_distance_and_time(f"{user_lat},{user_lng}", f"{row['Latitude']},{row['Longitude']}"), axis=1))
+            selected_schools = selected_schools.sort_values('prediction', ascending=False)
+            map = create_school_finder_map(number_of_schools, selected_schools)
+            if 'lat' not in st.session_state :
+                st.session_state.lat = user_lat
+            if 'lon' not in st.session_state :
+                st.session_state.lon = user_lng
+            if 'df2' not in st.session_state :
+                st.session_state.df2 = selected_schools
 
-        # Define the columns before the map is created
-        c1, c2 = st.columns((2, 1))
-        with c1:
-            folium.Marker([user_lat, user_lng], popup=address_input, icon=folium.Icon(color='red')).add_to(map)
-            map.save("map.html")
-            with open("map.html", "r") as f:
-                html = f.read()
-                # Use column 1 (c1) for the map
-                st.components.v1.html(html, width=800, height=600)
-        with c2:
-            st.title('School Recommendations')
-            for i in range(number_of_schools):
-                next_page = st.button(f"{selected_schools['SCHOOL_NAME'].iloc[i]} | Predicted GPA: {round(selected_schools['prediction'].iloc[i], 2)} | Distance: {selected_schools['Distance'].iloc[i]} | Duration: {selected_schools['Duration'].iloc[i]}")
-                if next_page:
-                    #st.write(f"School ID just changed to {df_school_type['school_id'].iloc[i]}")
-                    st.session_state.school_id = selected_schools['school_id'].iloc[i]
-                    switch_page("page_03")
-
+            # Define the columns before the map is created
+            c1, c2 = st.columns((2, 1))
+            with c1:
+                folium.Marker([user_lat, user_lng], popup=address_input, icon=folium.Icon(color='red')).add_to(map)
+                map.save("map.html")
+                with open("map.html", "r") as f:
+                    html = f.read()
+                    # Use column 1 (c1) for the map
+                    st.components.v1.html(html, width=800, height=600)
+            with c2:
+                st.title('School Recommendations')
+                for i in range(number_of_schools):
+                    next_page = st.button(f"{selected_schools['SCHOOL_NAME'].iloc[i]} | Predicted GPA: {round(selected_schools['prediction'].iloc[i], 2)} | Distance: {selected_schools['Distance'].iloc[i]} | Duration: {selected_schools['Duration'].iloc[i]}")
+                    if next_page:
+                        #st.write(f"School ID just changed to {df_school_type['school_id'].iloc[i]}")
+                        st.session_state.school_id = selected_schools['school_id'].iloc[i]
+                        switch_page("page_03")
 
 if __name__ == "__main__":
     main()

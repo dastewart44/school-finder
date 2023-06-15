@@ -405,27 +405,28 @@ def main():
 
     with col1:
         st.markdown(f"### {school_name}")
-        school_picture()
-        school_info = school_description(f"Provide me with a one-paragraph description of {school_name} in Denver, Colorado")
-        st.write(school_info)
-        st.markdown("### Driving Route")
-        m = create_map(user_lat, user_lon, school_lat, school_lon, school_name)
-        # Get the route coordinates
-        route_coordinates, total_distance = create_route(user_lon, user_lat, school_lon, school_lat)
-        # Add the route polyline to the map
-        folium.PolyLine(locations=route_coordinates, color='blue').add_to(m)
+        with st.spinner("Generating school profile..."):
+            school_picture()
+            school_info = school_description(f"Provide me with a one-paragraph description of {school_name} in Denver, Colorado")
+            st.write(school_info)
+            st.markdown("### Driving Route")
+            m = create_map(user_lat, user_lon, school_lat, school_lon, school_name)
+            # Get the route coordinates
+            route_coordinates, total_distance = create_route(user_lon, user_lat, school_lon, school_lat)
+            # Add the route polyline to the map
+            folium.PolyLine(locations=route_coordinates, color='blue').add_to(m)
 
-        # Render the map using folium_static
-        folium_static(m, width=450)
+            # Render the map using folium_static
+            folium_static(m, width=450)
 
-        directions = generate_driving_directions(user_lat, user_lon, school_lat, school_lon)
-        for line in directions:
-            st.markdown(line)
-        st.write(f"Total driving distance from your house to {school_name} is {total_distance:.1f} miles.")
+            directions = generate_driving_directions(user_lat, user_lon, school_lat, school_lon)
+            for line in directions:
+                st.markdown(line)
+            st.write(f"Total driving distance from your house to {school_name} is {total_distance:.1f} miles.")
 
-    with col3:
-        circle_plot()
-        avg_gpa_by_group()
+        with col3:
+            circle_plot()
+            avg_gpa_by_group()
 
 if __name__ == "__main__":
     main()

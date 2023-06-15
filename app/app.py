@@ -9,6 +9,7 @@ st.set_page_config(
 )
 
 def main():
+    st.snow()
     st.markdown(
         """
         <style>
@@ -22,7 +23,7 @@ def main():
             font-size: 18px;
         }
         .stApp {
-            background-image: url("https://i.imgur.com/YFcGVI9.jpeg");
+            background-image: url("https://i.imgur.com/YFcGVI9.jpg");
             background-attachment: fixed;
             background-size: cover;
         }
