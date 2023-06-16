@@ -132,7 +132,7 @@ def main():
     address_input = st.text_input('Enter your home address:')
 
     if 'school_id' not in st.session_state:
-        st.session_state.school_id = df_school_type['school_id'].iloc[0]
+        st.session_state.school_id = 1
 
     if address_input:
         number_of_schools = st.slider('Select number of schools:', 1, 20, 3)
