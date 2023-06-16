@@ -139,7 +139,7 @@ def main():
         with st.spinner("Plotting schools on map..."):
             street, city, state = parse_address(address_input)
             user_lat, user_lng = geocode_place(street, city, state)
-            selected_schools = selected_schools.sort_values('prediction', ascending=False)
+            df_school_type = df_school_type.sort_values('prediction', ascending=False)
             selected_schools = df_school_type.iloc[:number_of_schools].copy()
             selected_schools["Distance"], selected_schools["Duration"] = zip(*selected_schools.apply(lambda row: calculate_distance_and_time(f"{user_lat},{user_lng}", f"{row['Latitude']},{row['Longitude']}"), axis=1))
             map = create_school_finder_map(number_of_schools, selected_schools)
