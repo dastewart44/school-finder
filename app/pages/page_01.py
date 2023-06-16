@@ -125,7 +125,7 @@ def main():
     top_schools = best_schools(vals)
     top_schools['school_type_keep'] = school_type
     # Check if you've already initialized the data
-    with st.spinner('Generating list of schools...')
+    with st.spinner('Generating list of schools...'):
         if 'df' not in st.session_state:
             # Save the data to session state
             st.session_state.df = pd.DataFrame()
