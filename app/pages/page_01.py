@@ -122,18 +122,18 @@ def main():
 
     characteristics = [[sped, frl, ell, race_vals[0], race_vals[1], race_vals[2], race_vals[3], starting_gpa]]
     vals = pd.DataFrame(characteristics, columns=['sped_flag', 'frl_flag', 'ell_flag', 'asian_flag', 'black_flag', 'hispanic_flag', 'white_flag', 'starting_gpa'])
-    
     top_schools = best_schools(vals)
     top_schools['school_type_keep'] = school_type
     # Check if you've already initialized the data
-    if 'df' not in st.session_state:
-        # Save the data to session state
-        st.session_state.df = pd.DataFrame()
-    st.session_state.df = top_schools
-    st.session_state.race = race_ethnicity
-    next_page = st.button("Click to See Schools")
-    if next_page:
-        switch_page("page_02")   
+    with st.spinner('Generating list of schools...')
+        if 'df' not in st.session_state:
+            # Save the data to session state
+            st.session_state.df = pd.DataFrame()
+            st.session_state.df = top_schools
+            st.session_state.race = race_ethnicity
+            next_page = st.button("Click to See Schools")
+            if next_page:
+                switch_page("page_02")   
 
 if __name__ == "__main__":
     main()
